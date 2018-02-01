@@ -1,0 +1,58 @@
+version: "3.1"
+
+services:
+
+  traefik:
+    image: traefik:latest
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik/traefik.toml:/traefik.toml
+      - ./traefik/acme.json:/acme.json
+    networks:
+      - default
+    container_name: ${CFG_NAME_TRAEFIK}
+
+  database:
+    image: mariadb:latest
+    restart: always
+    expose:
+      - 3306
+    secrets:
+      - mysql-root
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql-root
+    volumes:
+      - ./mariadb/init.sql:/docker-entrypoint-initdb.d/zz-init.sql
+      - ./mariadb/mysql:/var/lib/mysql
+    container_name: ${CFG_NAME_DATABASE}
+
+  # TODO: Replace this image with my own image.
+  nginx-php-fpm:
+    image: richarvey/nginx-php-fpm:latest
+    restart: always
+    depends_on:
+      - traefik
+      - database
+    environment:
+      PUID: ${CFG_PUID}
+      PGID: ${CFG_PGID}
+      DATABASE_HOST: ${CFG_NAME_DATABASE}
+    expose:
+      - 80
+    volumes:
+      - ./nginx/data/html:/var/www/html
+    labels:
+      - "traefik.backend=nweb-nginx"
+      - "traefik.frontend.rule=HostRegexp:${CFG_DOMAIN},{subdomain:[a-z]+}.${CFG_DOMAIN}"
+      - "traefik.enable=true"
+      - "traefik.port=80"
+      - "traefik.protocol=http"
+    container_name: ${CFG_NAME_NGINX}
+
+secrets:
+  mysql-root:
+    file: ./mariadb/mysql-root
