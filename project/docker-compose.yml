@@ -44,7 +44,7 @@ services:
     expose:
       - 80
     volumes:
-      - ./nginx/data/html:/var/www/html
+      - ./nginx/html:/var/www/html
     labels:
       - "traefik.backend=nweb-nginx"
       - "traefik.frontend.rule=HostRegexp:${CFG_DOMAIN},{subdomain:[a-z]+}.${CFG_DOMAIN}"
