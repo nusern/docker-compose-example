@@ -46,7 +46,7 @@ services:
     volumes:
       - ./nginx/html:/var/www/html
     labels:
-      - "traefik.backend=nweb-nginx"
+      - "traefik.backend=nginx"
       - "traefik.frontend.rule=HostRegexp:${CFG_DOMAIN},{subdomain:[a-z]+}.${CFG_DOMAIN}"
       - "traefik.enable=true"
       - "traefik.port=80"
